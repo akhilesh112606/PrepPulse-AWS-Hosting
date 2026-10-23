@@ -107,7 +107,7 @@ SMTP_PASSWORD=your-app-password
 SMTP_USE_TLS=true
 
 APIFY_API_TOKEN=optional-apify-token
-APIFY_YOUTUBE_ACTOR_ID=pintostudio~youtube-transcript
+APIFY_YOUTUBE_ACTOR_ID=johnvc~YoutubeTranscripts
 
 GEMINI_API_KEY=optional-gemini-key
 GEMINI_MODEL=gemini-1.5-flash

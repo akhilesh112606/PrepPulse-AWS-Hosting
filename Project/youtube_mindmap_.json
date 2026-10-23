@@ -29,7 +29,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.apify.com/v2/acts/pintostudio~youtube-transcript/run-sync-get-dataset-items?token={{$env.APIFY_API_TOKEN}}&timeout=120",
+        "url": "=https://api.apify.com/v2/acts/johnvc~YoutubeTranscripts/run-sync-get-dataset-items?token={{$env.APIFY_API_TOKEN}}&timeout=120",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -41,7 +41,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ urls: [$json['YouTube Video URL']], includeTimestamps: false, language: 'en' }) }}",
+        "jsonBody": "={{ JSON.stringify({ youtube_url: $json['YouTube Video URL'], languages: ['en'], output_formats: ['text'] }) }}",
         "options": {
           "timeout": 120000,
           "response": {
@@ -60,7 +60,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nlet transcriptText = '';\nlet videoTitle = 'YouTube Video';\n\nfor (const item of items) {\n  const data = item.json;\n\n  // pintostudio actor returns array of {text, start, duration}\n  if (Array.isArray(data) ) {\n    transcriptText += data.map(d => d.text || d).filter(Boolean).join(' ') + ' ';\n  }\n  if (typeof data.transcript === 'string') {\n    transcriptText += data.transcript + ' ';\n  } else if (Array.isArray(data.transcript)) {\n    transcriptText += data.transcript.map(t => t.text || t).filter(Boolean).join(' ') + ' ';\n  }\n  if (Array.isArray(data.captions)) {\n    transcriptText += data.captions.map(c => c.text || c).filter(Boolean).join(' ') + ' ';\n  }\n  if (typeof data.text === 'string') {\n    transcriptText += data.text + ' ';\n  }\n  if (data.title) videoTitle = data.title;\n  if (data.videoTitle) videoTitle = data.videoTitle;\n}\n\n// Deep scan: pull all 'text' string values recursively\nif (!transcriptText.trim()) {\n  function extractText(obj) {\n    if (!obj || typeof obj !== 'object') return '';\n    let out = '';\n    for (const key of Object.keys(obj)) {\n      if (key === 'text' && typeof obj[key] === 'string') out += obj[key] + ' ';\n      else out += extractText(obj[key]);\n    }\n    return out;\n  }\n  transcriptText = items.map(i => extractText(i.json)).join(' ');\n}\n\nif (!transcriptText.trim()) {\n  throw new Error('Could not extract transcript. Check Apify actor response in previous node.');\n}\n\nconst trimmed = transcriptText.trim().substring(0, 6000);\n\nreturn [{\n  json: {\n    transcript: trimmed,\n    videoTitle,\n    youtubeUrl: $('① Form — Input YouTube URL').item.json['YouTube Video URL'],\n    charCount: trimmed.length\n  }\n}];"
+        "jsCode": "const items = $input.all();\nlet transcriptText = '';\nlet videoTitle = 'YouTube Video';\n\nfor (const item of items) {\n  const data = item.json;\n\n  if (typeof data.non_timestamped === 'string') {\n    transcriptText += data.non_timestamped + ' ';\n  }\n  // legacy actor shapes: array of {text, start, duration}\n  if (Array.isArray(data) ) {\n    transcriptText += data.map(d => d.text || d).filter(Boolean).join(' ') + ' ';\n  }\n  if (typeof data.transcript === 'string') {\n    transcriptText += data.transcript + ' ';\n  } else if (Array.isArray(data.transcript)) {\n    transcriptText += data.transcript.map(t => t.text || t).filter(Boolean).join(' ') + ' ';\n  }\n  if (Array.isArray(data.captions)) {\n    transcriptText += data.captions.map(c => c.text || c).filter(Boolean).join(' ') + ' ';\n  }\n  if (typeof data.text === 'string') {\n    transcriptText += data.text + ' ';\n  }\n  if (data.title) videoTitle = data.title;\n  if (data.videoTitle) videoTitle = data.videoTitle;\n}\n\n// Deep scan: pull all 'text' string values recursively\nif (!transcriptText.trim()) {\n  function extractText(obj) {\n    if (!obj || typeof obj !== 'object') return '';\n    let out = '';\n    for (const key of Object.keys(obj)) {\n      if (key === 'text' && typeof obj[key] === 'string') out += obj[key] + ' ';\n      else out += extractText(obj[key]);\n    }\n    return out;\n  }\n  transcriptText = items.map(i => extractText(i.json)).join(' ');\n}\n\nif (!transcriptText.trim()) {\n  throw new Error('Could not extract transcript. Check Apify actor response in previous node.');\n}\n\nconst trimmed = transcriptText.trim().substring(0, 6000);\n\nreturn [{\n  json: {\n    transcript: trimmed,\n    videoTitle,\n    youtubeUrl: $('① Form — Input YouTube URL').item.json['YouTube Video URL'],\n    charCount: trimmed.length\n  }\n}];"
       },
       "id": "code-extract-03",
       "name": "③ Code — Extract Transcript",
